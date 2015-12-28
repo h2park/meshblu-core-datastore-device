@@ -24,6 +24,11 @@ describe 'DeviceDatastore', ->
         type: 'light-saber'
       }
       {
+        uuid: 'great-lightsaber'
+        configureWhitelist: ['*']
+        type: 'light-saber'
+      }
+      {
         uuid: 'fire-saber'
         type: 'light-saber'
         discoverWhitelist: ['darth-vader']
@@ -129,3 +134,76 @@ describe 'DeviceDatastore', ->
 
       it 'should yield the lightsabers I can see', ->
         expect(@devices.length).to.equal 3
+
+  describe '->remove', ->
+    describe 'when destroying a lightsaber device I own', ->
+      beforeEach 'remove device', (done) ->
+        @sut.remove uuid: 'underwater-lightsaber', done
+
+      beforeEach 'find removed device', (done) ->
+        @sut.findOne uuid: 'underwater-lightsaber', (error, @device) => done()
+
+      it 'should remove the device', ->
+        expect(@device).not.to.exist
+
+    describe 'when attempting to destroy a lightsaber device I can see but not configure', ->
+      beforeEach 'remove device', (done) ->
+        @sut.remove uuid: 'curve-hilted', done
+
+      beforeEach 'find removed device', (done) ->
+        @db.devices.findOne uuid: 'curve-hilted', (error, @device) => done()
+
+      it 'should not remove the device', ->
+        expect(@device).to.exist
+
+    describe 'when attempting to destroy a lightsaber device that has me in it\'s configureWhitelist', ->
+      beforeEach 'remove device', (done) ->
+        @sut.remove uuid: 'fire-saber', (error, @result) => done()
+
+      beforeEach 'find removed device', (done) ->
+        @db.devices.findOne uuid: 'fire-saber', (error, @device) => done()
+
+      it 'should not remove the device', ->
+        expect(@device).to.exist
+
+      it 'should tell us it didn\'t update anything', ->
+        expect(@result.n).to.equal 0
+
+    describe 'when attempting to destroy a lightsaber device that has me listed as its owner', ->
+      beforeEach 'remove device', (done) ->
+        @sut.remove uuid: 'underwater-lightsaber', (error, @result) => done()
+
+      beforeEach 'find removed device', (done) ->
+        @db.devices.findOne uuid: 'underwater-lightsaber', (error, @device) => done()
+
+      it 'should remove the device', ->
+        expect(@device).to.not.exist
+
+      it 'should tell us it removed the device', ->
+        expect(@result.n).to.equal 1
+
+    describe 'when attempting to destroy all lightsaber devices', ->
+      beforeEach 'remove devices', (done) ->
+        @sut.remove type: 'light-saber', (error, @result) => done()
+
+      beforeEach 'find removed devices', (done) ->
+        @db.devices.find type: 'light-saber', (error, @devices) => done()
+
+      it 'should remove the devices we are allowed to', ->
+        expect(@devices.length).to.equal 3
+
+      it 'should tell us it removed the devices', ->
+        expect(@result.n).to.equal 2
+
+    describe 'when attempting to destroy one lightsaber device but the query matches more', ->
+      beforeEach 'remove devices', (done) ->
+        @sut.remove {type: 'light-saber'}, {justOne: true}, (error, @result) => done()
+
+      beforeEach 'find removed devices', (done) ->
+        @db.devices.find type: 'light-saber', (error, @devices) => done()
+
+      it 'should remove just one device', ->
+        expect(@devices.length).to.equal 4
+
+      it 'should tell us it removed one device', ->
+        expect(@result.n).to.equal 1

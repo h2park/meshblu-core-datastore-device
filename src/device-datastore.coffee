@@ -8,20 +8,33 @@ class DeviceDatastore
       collection: 'devices'
 
   find: (query, callback) =>
-    secureQuery = @_getSecureQuery query
+    secureQuery = @_getSecureDiscoverQuery query
     @datastore.find secureQuery, callback
 
   findOne: (query, callback) =>
-    secureQuery = @_getSecureQuery query
+    secureQuery = @_getSecureDiscoverQuery query
     @datastore.findOne secureQuery, callback
 
-  _getSecureQuery: (query)=>
-    query = _.cloneDeep query
+  remove: (query, options, callback) =>
+    if _.isFunction options
+      callback = options
+      options = {}
+
+    secureQuery = @_getSecureConfigureQuery query
+    @datastore.remove secureQuery, options, callback
+
+  _getSecureDiscoverQuery: (query)=> @_getSecureQuery query, 'discoverWhitelist'
+
+  _getSecureConfigureQuery: (query) => @_getSecureQuery query, 'configureWhitelist'
+
+  _getSecureQuery: (query, whitelistName) =>
+    whitelistCheck = {}
+    whitelistCheck[whitelistName] = $in: ['*', @uuid]
     whitelistQuery =
       $or: [
         {uuid: @uuid}
         {owner: @uuid}
-        {discoverWhitelist: $in: ['*', @uuid]}
+        whitelistCheck
       ]
 
     @_mergeQueryWithWhitelistQuery query, whitelistQuery
