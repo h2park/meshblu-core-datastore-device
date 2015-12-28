@@ -1,3 +1,4 @@
+_ = require 'lodash'
 mongojs   = require 'mongojs'
 DeviceDatastore = require '../'
 
@@ -207,3 +208,54 @@ describe 'DeviceDatastore', ->
 
       it 'should tell us it removed one device', ->
         expect(@result.n).to.equal 1
+
+  describe '->update', ->
+    describe 'when updating a lightsaber device I own', ->
+      beforeEach 'updating device', (done) ->
+        @sut.update {uuid: 'underwater-lightsaber'}, {$set: color: 'orange'}, done
+
+      beforeEach 'find updated device', (done) ->
+        @sut.findOne uuid: 'underwater-lightsaber', (error, @device) => done()
+
+      it 'should update the device', ->
+        expect(@device.color).to.equal 'orange'
+
+    describe 'when attempting to update a lightsaber device I can\'t configure', ->
+      beforeEach 'update device', (done) ->
+        @sut.update {uuid: 'curve-hilted'}, {$set: side: 'dark'}, done
+
+      beforeEach 'find removed device', (done) ->
+        @db.devices.findOne uuid: 'curve-hilted', (error, @device) => done()
+
+      it 'should not update the device', ->
+        expect(@device.side).to.not.exist
+
+    describe 'when attempting to update a lightsaber device I can configure', ->
+      beforeEach 'update device', (done) ->
+        @sut.update {uuid: 'great-lightsaber'}, {$set: side: 'dark'}, done
+
+      beforeEach 'find removed device', (done) ->
+        @db.devices.findOne uuid: 'great-lightsaber', (error, @device) => done()
+
+      it 'should update the device', ->
+        expect(@device.side).to.equal 'dark'
+
+    describe 'when attempting to update all lightsaber devices', ->
+      beforeEach 'update devices', (done) ->
+        @sut.update type: 'light-saber', {$set: {side: 'dark'}}, {multi: true}, done
+
+      beforeEach 'find updated devices', (done) ->
+        @db.devices.find type: 'light-saber', side: 'dark', (error, @devices) => done()
+
+      it 'should update all lightsabers we can see to the dark side', ->
+        expect(@devices.length).to.equal 2
+
+    describe 'when attempting to update one lightsaber device but the query matches more', ->
+      beforeEach 'update device', (done) ->
+        @sut.update {type: 'light-saber'},  {$set: side: 'dark'}, (error, @result) => done()
+
+      beforeEach 'find updated devices', (done) ->
+        @db.devices.find type: 'light-saber', side: 'dark', (error, @devices) => done()
+
+      it 'should update just one device', ->
+        expect(@devices.length).to.equal 1

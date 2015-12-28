@@ -1,6 +1,6 @@
 {
   "name": "meshblu-core-datastore-device",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A datastore specifically for devices, that enforces meshblu whitelists and blacklists. ",
   "main": "index.js",
   "scripts": {

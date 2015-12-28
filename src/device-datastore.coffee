@@ -23,6 +23,14 @@ class DeviceDatastore
     secureQuery = @_getSecureConfigureQuery query
     @datastore.remove secureQuery, options, callback
 
+  update: (query, update, options, callback) =>
+    if _.isFunction options
+      callback = options
+      options = {}
+
+    secureQuery = @_getSecureConfigureQuery query
+    @datastore.update secureQuery, update, options, callback
+
   _getSecureDiscoverQuery: (query)=> @_getSecureQuery query, 'discoverWhitelist'
 
   _getSecureConfigureQuery: (query) => @_getSecureQuery query, 'configureWhitelist'
