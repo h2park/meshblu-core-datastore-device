@@ -29,8 +29,10 @@ class DeviceDatastore
   _mergeQueryWithWhitelistQuery: (query, whitelistQuery) =>
     whitelistQuery = $and : [whitelistQuery]
     whitelistQuery.$and.push $or: query.$or if query.$or?
+    whitelistQuery.$and.push $and: query.$and if query.$and?
+
     saferQuery = _.omit query, '$or'
-    
+
     _.extend saferQuery, whitelistQuery
 
 

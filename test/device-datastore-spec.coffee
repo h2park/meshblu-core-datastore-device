@@ -104,6 +104,24 @@ describe 'DeviceDatastore', ->
       it 'should not return the device', ->
         expect(@device).not.to.exist
 
+    describe 'if the user uses the $and keyword in their query', ->
+      beforeEach (done) ->
+        query =
+          $and: [ {color: 'red'}, {type: 'light-saber'}]
+        @sut.findOne query, (error, @device) => done()
+
+      it 'should return the device', ->
+        expect(@device).to.containSubset color: 'red', type: 'light-saber'
+
+      describe 'if the user uses the $and keyword in their query and they\'re not allowed to see the result', ->
+        beforeEach (done) ->
+          query =
+            $and: [ {color: 'blue'}, {type: 'light-saber'}]
+          @sut.findOne query, (error, @device) => done()
+
+        it 'should return the device', ->
+          expect(@device).not.to.exist
+
   describe '->find', ->
     describe 'when searching for lightsabers', ->
       beforeEach (done) ->
