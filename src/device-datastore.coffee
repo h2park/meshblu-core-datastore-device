@@ -8,10 +8,14 @@ class DeviceDatastore
       collection: 'devices'
 
   find: (query, callback) =>
+    return callback new Error 'Missing required constructor parameter: uuid' unless @uuid?
+
     secureQuery = @_getSecureDiscoverQuery query
     @datastore.find secureQuery, callback
 
   findOne: (query, callback) =>
+    return callback new Error 'Missing required constructor parameter: uuid' unless @uuid?
+
     secureQuery = @_getSecureDiscoverQuery query
     @datastore.findOne secureQuery, callback
 
@@ -20,6 +24,8 @@ class DeviceDatastore
       callback = options
       options = {}
 
+    return callback new Error 'Missing required constructor parameter: uuid' unless @uuid?
+
     secureQuery = @_getSecureConfigureQuery query
     @datastore.remove secureQuery, options, callback
 
@@ -27,6 +33,8 @@ class DeviceDatastore
     if _.isFunction options
       callback = options
       options = {}
+
+    return callback new Error 'Missing required constructor parameter: uuid' unless @uuid?
 
     secureQuery = @_getSecureConfigureQuery query
     @datastore.update secureQuery, update, options, callback

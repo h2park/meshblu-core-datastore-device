@@ -47,6 +47,44 @@ describe 'DeviceDatastore', ->
     ]
     @db.devices.insert sabers, done
 
+  describe 'when constructed without a uuid', ->
+    beforeEach ->
+      @sut = new DeviceDatastore database: @db
+
+    describe '->find', ->
+      beforeEach (done) ->
+        @sut.find {}, (@error, @devices) => done()
+
+      it 'should yield an error indicating that a uuid is required', ->
+        expect(@error).to.exist
+
+      it 'should not yield any devices', ->
+        expect(@devices).not.to.exist
+
+    describe '->findOne', ->
+      beforeEach (done) ->
+        @sut.findOne {}, (@error, @devices) => done()
+
+      it 'should yield an error indicating that a uuid is required', ->
+        expect(@error).to.exist
+
+      it 'should not yield any devices', ->
+        expect(@devices).not.to.exist
+
+    describe '->update', ->
+      beforeEach (done) ->
+        @sut.update {}, {}, (@error) => done()
+
+      it 'should yield an error indicating that a uuid is required', ->
+        expect(@error).to.exist
+
+    describe '->remove', ->
+      beforeEach (done) ->
+        @sut.remove {}, (@error) => done()
+
+      it 'should yield an error indicating that a uuid is required', ->
+        expect(@error).to.exist
+
   describe '->findOne', ->
     describe 'when finding a device without a discoverWhitelist or owner', ->
 
