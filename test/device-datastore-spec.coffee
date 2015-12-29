@@ -1,16 +1,17 @@
 _ = require 'lodash'
 mongojs   = require 'mongojs'
 DeviceDatastore = require '../'
+MeshbluCoreDatastore = require 'meshblu-core-datastore'
 
 describe 'DeviceDatastore', ->
   beforeEach (done) ->
-    @db = mongojs 'datastore-device-find-test', ['devices']
-    @db.devices.remove done
+    @database = mongojs 'datastore-device-find-test', ['devices']
+    @database.devices.remove done
 
   beforeEach ->
     @sut = new DeviceDatastore
       uuid: 'darth-vader'
-      database:   @db
+      database: @database
 
   beforeEach 'insert devices', (done) ->
     sabers = [
@@ -45,11 +46,11 @@ describe 'DeviceDatastore', ->
         type: 'sith-lord'
       }
     ]
-    @db.devices.insert sabers, done
+    @database.devices.insert sabers, done
 
   describe 'when constructed without a uuid', ->
     beforeEach ->
-      @sut = new DeviceDatastore database: @db
+      @sut = new DeviceDatastore database: @database
 
     describe '->find', ->
       beforeEach (done) ->
@@ -84,6 +85,23 @@ describe 'DeviceDatastore', ->
 
       it 'should yield an error indicating that a uuid is required', ->
         expect(@error).to.exist
+
+  describe 'when constructed with a meshblu-core-datastore', ->
+    beforeEach ->
+      meshbluDatastore = new MeshbluCoreDatastore
+        database: @database
+        collection: 'devices'
+
+      @sut = new DeviceDatastore
+        uuid: 'darth-vader'
+        meshbluDatastore: meshbluDatastore
+
+    describe 'when searching for myself', ->
+      beforeEach 'find device', (done)->
+        @sut.findOne uuid: 'darth-vader', (error, @device) => done()
+
+      it 'should let me find myself', ->
+        expect(@device).to.exist
 
   describe '->findOne', ->
     describe 'when finding a device without a discoverWhitelist or owner', ->
@@ -190,7 +208,7 @@ describe 'DeviceDatastore', ->
         @sut.remove uuid: 'curve-hilted', done
 
       beforeEach 'find removed device', (done) ->
-        @db.devices.findOne uuid: 'curve-hilted', (error, @device) => done()
+        @database.devices.findOne uuid: 'curve-hilted', (error, @device) => done()
 
       it 'should not remove the device', ->
         expect(@device).to.exist
@@ -200,7 +218,7 @@ describe 'DeviceDatastore', ->
         @sut.remove uuid: 'fire-saber', (error, @result) => done()
 
       beforeEach 'find removed device', (done) ->
-        @db.devices.findOne uuid: 'fire-saber', (error, @device) => done()
+        @database.devices.findOne uuid: 'fire-saber', (error, @device) => done()
 
       it 'should not remove the device', ->
         expect(@device).to.exist
@@ -213,7 +231,7 @@ describe 'DeviceDatastore', ->
         @sut.remove uuid: 'underwater-lightsaber', (error, @result) => done()
 
       beforeEach 'find removed device', (done) ->
-        @db.devices.findOne uuid: 'underwater-lightsaber', (error, @device) => done()
+        @database.devices.findOne uuid: 'underwater-lightsaber', (error, @device) => done()
 
       it 'should remove the device', ->
         expect(@device).to.not.exist
@@ -226,7 +244,7 @@ describe 'DeviceDatastore', ->
         @sut.remove type: 'light-saber', (error, @result) => done()
 
       beforeEach 'find removed devices', (done) ->
-        @db.devices.find type: 'light-saber', (error, @devices) => done()
+        @database.devices.find type: 'light-saber', (error, @devices) => done()
 
       it 'should remove the devices we are allowed to', ->
         expect(@devices.length).to.equal 3
@@ -239,7 +257,7 @@ describe 'DeviceDatastore', ->
         @sut.remove {type: 'light-saber'}, {justOne: true}, (error, @result) => done()
 
       beforeEach 'find removed devices', (done) ->
-        @db.devices.find type: 'light-saber', (error, @devices) => done()
+        @database.devices.find type: 'light-saber', (error, @devices) => done()
 
       it 'should remove just one device', ->
         expect(@devices.length).to.equal 4
@@ -263,7 +281,7 @@ describe 'DeviceDatastore', ->
         @sut.update {uuid: 'curve-hilted'}, {$set: side: 'dark'}, done
 
       beforeEach 'find removed device', (done) ->
-        @db.devices.findOne uuid: 'curve-hilted', (error, @device) => done()
+        @database.devices.findOne uuid: 'curve-hilted', (error, @device) => done()
 
       it 'should not update the device', ->
         expect(@device.side).to.not.exist
@@ -273,7 +291,7 @@ describe 'DeviceDatastore', ->
         @sut.update {uuid: 'great-lightsaber'}, {$set: side: 'dark'}, done
 
       beforeEach 'find removed device', (done) ->
-        @db.devices.findOne uuid: 'great-lightsaber', (error, @device) => done()
+        @database.devices.findOne uuid: 'great-lightsaber', (error, @device) => done()
 
       it 'should update the device', ->
         expect(@device.side).to.equal 'dark'
@@ -283,7 +301,7 @@ describe 'DeviceDatastore', ->
         @sut.update type: 'light-saber', {$set: {side: 'dark'}}, {multi: true}, done
 
       beforeEach 'find updated devices', (done) ->
-        @db.devices.find type: 'light-saber', side: 'dark', (error, @devices) => done()
+        @database.devices.find type: 'light-saber', side: 'dark', (error, @devices) => done()
 
       it 'should update all lightsabers we can see to the dark side', ->
         expect(@devices.length).to.equal 2
@@ -293,7 +311,7 @@ describe 'DeviceDatastore', ->
         @sut.update {type: 'light-saber'},  {$set: side: 'dark'}, (error, @result) => done()
 
       beforeEach 'find updated devices', (done) ->
-        @db.devices.find type: 'light-saber', side: 'dark', (error, @devices) => done()
+        @database.devices.find type: 'light-saber', side: 'dark', (error, @devices) => done()
 
       it 'should update just one device', ->
         expect(@devices.length).to.equal 1

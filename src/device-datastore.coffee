@@ -2,22 +2,20 @@ _ = require 'lodash'
 MeshbluCoreDatastore = require 'meshblu-core-datastore'
 
 class DeviceDatastore
-  constructor: ({@uuid, database}) ->
-    @datastore = new MeshbluCoreDatastore
-      database: database
-      collection: 'devices'
+  constructor: ({@uuid, database, @meshbluDatastore}) ->
+    @meshbluDatastore ?= new MeshbluCoreDatastore database: database, collection: 'devices'
 
   find: (query, callback) =>
     return callback new Error 'Missing required constructor parameter: uuid' unless @uuid?
 
     secureQuery = @_getSecureDiscoverQuery query
-    @datastore.find secureQuery, callback
+    @meshbluDatastore.find secureQuery, callback
 
   findOne: (query, callback) =>
     return callback new Error 'Missing required constructor parameter: uuid' unless @uuid?
 
     secureQuery = @_getSecureDiscoverQuery query
-    @datastore.findOne secureQuery, callback
+    @meshbluDatastore.findOne secureQuery, callback
 
   remove: (query, options, callback) =>
     if _.isFunction options
@@ -27,7 +25,7 @@ class DeviceDatastore
     return callback new Error 'Missing required constructor parameter: uuid' unless @uuid?
 
     secureQuery = @_getSecureConfigureQuery query
-    @datastore.remove secureQuery, options, callback
+    @meshbluDatastore.remove secureQuery, options, callback
 
   update: (query, update, options, callback) =>
     if _.isFunction options
@@ -37,7 +35,7 @@ class DeviceDatastore
     return callback new Error 'Missing required constructor parameter: uuid' unless @uuid?
 
     secureQuery = @_getSecureConfigureQuery query
-    @datastore.update secureQuery, update, options, callback
+    @meshbluDatastore.update secureQuery, update, options, callback
 
   _getSecureDiscoverQuery: (query)=> @_getSecureQuery query, 'discoverWhitelist'
 
